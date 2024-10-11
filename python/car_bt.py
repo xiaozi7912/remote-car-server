@@ -1,24 +1,54 @@
 import bluetooth
 from gpiozero import OutputDevice
+import time
+import threading
 
 accelertor = OutputDevice(17)
 light = OutputDevice(27)
+is_light_blink = False
 
 def handle_command(command):
+    global is_light_blink
     if command == 'start':
+        print('Motor started')
         accelertor.on()
         return 'Motor started'
+    
     elif command == 'stop':
         accelertor.off()
+        print('Motor stopped')
         return 'Motor stopped'
+    
     elif command == 'light_on':
         light.on()
+        is_light_blink = False
+        print('Light turned on')
         return 'Light turned on'
+    
     elif command == 'light_off':
         light.off()
+        is_light_blink = False
+        print('Light turned off')
         return 'Light turned off'
+    
+    elif command == 'light_blink':
+        if not is_light_blink:
+            is_light_blink = True
+            light_thread = threading.Thread(target=light_blink)
+            light_thread.start()
+        print('Light blink')
+        return 'Light blink'
+    
     else:
         return 'Invalid command'
+    
+def light_blink():
+    global is_light_blink
+    while is_light_blink:
+        light.on()
+        time.sleep(0.5)
+        light.off()
+        time.sleep(0.5)
 
 def start_bluetooth_server():
     server_sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
